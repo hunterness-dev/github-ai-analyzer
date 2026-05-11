@@ -1,0 +1,19 @@
+# GitHub Profile Analyzer — dependencies
+#
+# Install with:
+#   pip install -r requirements.txt
+
+# HTTP requests to the GitHub REST API
+requests>=2.31.0
+
+# Data manipulation (used for timeline sorting and future extensions)
+pandas>=2.0.0
+
+# Charts (language pie, stars bar, repo timeline)
+matplotlib>=3.7.0
+
+# Beautiful terminal output (dashboard panels, progress bars, tables)
+rich>=13.0.0
+
+# Testing
+pytest>=7.4.0
