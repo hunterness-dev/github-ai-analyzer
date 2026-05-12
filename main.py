@@ -18,13 +18,18 @@ Usage
 
   # Skip chart generation (faster, no matplotlib window)
   python main.py torvalds --no-charts
+
+  # Generate AI-powered insights using Ollama
+  python main.py torvalds --ai
+
+  # Use a specific Ollama model
+  python main.py torvalds --ai --model mistral
 """
 
 import argparse
 import sys
 import os
 
-from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from analyzer.api import GitHubClient
@@ -35,6 +40,8 @@ from analyzer.languages import (
 )
 from analyzer.stats import compute_stats
 from analyzer.scoring import compute_scores
+
+from ollama import OllamaAgent
 
 from utils.display import (
     console,
@@ -117,38 +124,47 @@ def display_analysis(
 # ---------------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    p = argparse.ArgumentParser(
         prog="github-analyzer",
         description="Analyse a GitHub user's public profile and repositories.",
     )
-    parser.add_argument("username", help="GitHub username to analyse")
-    parser.add_argument(
+    p.add_argument("username", help="GitHub username to analyse")
+    p.add_argument(
         "--compare",
         metavar="USERNAME2",
         help="Compare with a second GitHub user",
     )
-    parser.add_argument(
+    p.add_argument(
         "--token",
         metavar="TOKEN",
         default=os.getenv("GITHUB_TOKEN"),
         help="GitHub personal access token (or set GITHUB_TOKEN env var)",
     )
-    parser.add_argument(
+    p.add_argument(
         "--export",
         action="store_true",
         help="Export analysis to JSON and Markdown files",
     )
-    parser.add_argument(
+    p.add_argument(
         "--no-charts",
         action="store_true",
         help="Skip matplotlib chart generation",
     )
-    return parser
+    p.add_argument(
+        "--ai",
+        action="store_true",
+        help="Generate AI-powered insights using Ollama",
+    )
+    p.add_argument(
+        "--model",
+        default="llama3",
+        help="Ollama model to use (default: llama3)",
+    )
+    return p
 
 
 def main() -> None:
-    parser = build_parser()
-    args = parser.parse_args()
+    args = build_parser().parse_args()
 
     client = GitHubClient(token=args.token)
 
@@ -195,8 +211,27 @@ def main() -> None:
         md_path = export_markdown(
             args.username, user, stats, scores, lang_dist, repos, strongest
         )
-        console.print(f"\n[green]✔[/] JSON  → [cyan]{json_path}[/]")
+        console.print(f"\n[green]✔[/] JSON   → [cyan]{json_path}[/]")
         console.print(f"[green]✔[/] Report → [cyan]{md_path}[/]")
+
+    # ------------------------------------------------------------------
+    # AI Insights
+    # ------------------------------------------------------------------
+    if args.ai:
+        agent = OllamaAgent(model=args.model)
+
+        insights = agent.generate_insights(user, stats, scores, lang_dist, strongest)
+        console.print(f"\n[bold cyan]🤖 AI Insights:[/]\n{insights}")
+
+        weaknesses = agent.explain_weaknesses(user, stats, scores, lang_dist, strongest)
+        console.print(f"\n[bold cyan]⚠️  Weaknesses:[/]\n{weaknesses}")
+
+        if repos:
+            top_repo = max(repos, key=lambda r: r.get("stargazers_count", 0))
+            top_explained = agent.explain_top_repo(
+                user, stats, scores, lang_dist, strongest, top_repo
+            )
+            console.print(f"\n[bold cyan]⭐️ Top Repo:[/]\n{top_explained}")
 
     # ------------------------------------------------------------------
     # Comparison
