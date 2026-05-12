@@ -1,6 +1,6 @@
 # 🔍 GitHub Profile Analyzer
 
-A clean, production-quality CLI tool that analyses any GitHub user's public profile and repositories, then generates rich statistics, scores, and visual charts — all in your terminal.
+A clean, production-quality CLI tool that analyses any GitHub user's public profile and repositories, then generates rich statistics, scores, visual charts, and AI-powered insights — all in your terminal.
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -19,6 +19,7 @@ A clean, production-quality CLI tool that analyses any GitHub user's public prof
 | 📈 **Charts** | Language pie chart, stars bar chart, repo growth timeline |
 | 📤 **Export** | JSON data file and Markdown report |
 | ⚔️  **Compare** | Side-by-side comparison of two GitHub users |
+| 🤖 **AI Insights** | AI-generated profile summary, weaknesses, and top repo analysis via Ollama |
 
 ---
 
@@ -51,6 +52,12 @@ python main.py torvalds --compare gvanrossum
 
 # Skip chart generation
 python main.py torvalds --no-charts
+
+# Generate AI-powered insights (requires Ollama)
+python main.py torvalds --ai
+
+# Use a specific Ollama model
+python main.py torvalds --ai --model mistral
 ```
 
 ### 4. (Optional) Set a GitHub token
@@ -70,6 +77,45 @@ Get a token at: https://github.com/settings/tokens (no scopes needed for public 
 
 ---
 
+## 🤖 AI Insights (Ollama)
+
+The `--ai` flag enables local AI-powered analysis using [Ollama](https://ollama.com). No API key or internet connection required — everything runs on your machine.
+
+### Setup
+
+1. Install Ollama: https://ollama.com/download
+2. Pull a model:
+
+```bash
+ollama pull llama3      # default
+ollama pull mistral     # or any other model
+```
+
+3. Start the Ollama server:
+
+```bash
+ollama serve
+```
+
+4. Run the analyzer with `--ai`:
+
+```bash
+python main.py torvalds --ai
+python main.py torvalds --ai --model mistral
+```
+
+### What it generates
+
+| Output | Description |
+|--------|-------------|
+| 🤖 **AI Insights** | Summary or README-style profile overview (depending on score) |
+| ⚠️ **Weaknesses** | Specific areas to improve with actionable suggestions |
+| ⭐️ **Top Repo** | Explanation of why the most-starred repo stands out |
+
+> Developers with an overall score ≥ 80 get a full README-style breakdown. Others get a concise summary.
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -80,7 +126,8 @@ github-analyzer/
 │   ├── repos.py        # Repository feature detection and enrichment
 │   ├── languages.py    # Language distribution and strongest tech analysis
 │   ├── stats.py        # Aggregate statistics computation
-│   └── scoring.py      # Scoring system and developer classification
+│   ├── scoring.py      # Scoring system and developer classification
+│   └── ollama_agent.py # Ollama AI insights agent
 │
 ├── visualizations/
 │   └── charts.py       # matplotlib chart generation (3 charts)
@@ -195,7 +242,7 @@ All tests are fully offline (no network calls — all data is mocked).
 ## ⚙️ CLI Reference
 
 ```
-usage: python main.py [-h] [--compare USERNAME2] [--token TOKEN] [--export] [--no-charts] username
+usage: python main.py [-h] [--compare USERNAME2] [--token TOKEN] [--export] [--no-charts] [--ai] [--model MODEL] username
 
 positional arguments:
   username              GitHub username to analyse
@@ -206,6 +253,8 @@ options:
   --token TOKEN         GitHub personal access token (or GITHUB_TOKEN env var)
   --export              Export analysis to JSON and Markdown files
   --no-charts           Skip matplotlib chart generation (faster)
+  --ai                  Generate AI-powered insights using Ollama
+  --model MODEL         Ollama model to use (default: llama3)
 ```
 
 ---
@@ -240,6 +289,7 @@ The modular architecture makes it easy to add features:
 - **New chart** → add to `visualizations/charts.py`
 - **New export format** → add to `utils/export.py`
 - **New display panel** → add to `utils/display.py`
+- **New AI prompt** → add a method to `analyzer/ollama_agent.py`
 
 ---
 
@@ -254,3 +304,4 @@ MIT License — see `LICENSE` for details.
 - [GitHub REST API](https://docs.github.com/en/rest)
 - [Rich](https://github.com/Textualize/rich) for the beautiful terminal output
 - [matplotlib](https://matplotlib.org/) for the charts
+- [Ollama](https://ollama.com) for local AI inference
